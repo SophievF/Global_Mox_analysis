@@ -23,3 +23,4 @@ Folder Code:
 - Mox_SOC_DataDistribution.R: Data distribution analysis. Needed to generate Figures 1, 2, A1-A7, Table A1
 - Mox_SOC_LinearMixedEffectsModels_allHLZ.R: Linear mixed-effects models with all HLZ. Needed to generate Figure 5, and Table A8 and A9
 - Mox_SOC_LinearMixedEffectsModels_moistHLZ.R: Linear mixed-effects models with HLZ grouped by moisture. Needed to generate Figures 3, A8, and A9; Tables 1, and A2-A4.
+- Mox_SOC_LinearMixedEffectsModels_temperatureHLZ.R: Linear mixed-effects models with HLZ grouped by temperature. Needed to generate Figures 4, A12, and A13; Tables 2, and A5-A7.

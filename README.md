@@ -20,7 +20,8 @@ Folder Data:
 Folder Code:
 - Mox_SOC_GlobalData.R: Extract climate data (MAP, MAT, HLZ). Needed to generate Database_HLZ_2024-05-27.csv
 - Mox_SOC_HLZ_Grouping.R Group HLZ. Needed to generate Database_HLZ_grp_2024-05-27.csv
-- Mox_SOC_DataDistribution.R: Data distribution analysis. Needed to generate Figures 1, 2, A1-A7, Table A1
-- Mox_SOC_LinearMixedEffectsModels_allHLZ.R: Linear mixed-effects models with all HLZ. Needed to generate Figure 5, and Table A8 and A9
+- Mox_SOC_DataDistribution.R: Data distribution analysis. Needed to generate Figures 1, 2, and A1-A7; Table A1
+- Mox_SOC_LinearMixedEffectsModels_allHLZ.R: Linear mixed-effects models with all HLZ. Needed to generate Figure 5; Tables A8 and A9
 - Mox_SOC_LinearMixedEffectsModels_moistHLZ.R: Linear mixed-effects models with HLZ grouped by moisture. Needed to generate Figures 3, A8, and A9; Tables 1, and A2-A4.
 - Mox_SOC_LinearMixedEffectsModels_temperatureHLZ.R: Linear mixed-effects models with HLZ grouped by temperature. Needed to generate Figures 4, A12, and A13; Tables 2, and A5-A7.
+- Mox_SOC_RandomForest_allHLZ.R: Random forest model with all Holdridge Life Zones. Needed to generate Figures A10 and A11.

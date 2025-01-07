@@ -1,28 +1,28 @@
 ## Global SOC - Mox ##
 ## 2024-03-01 ##
 ## Sophie von Fromm ##
-
 ## Grouping of HLZ ##
 
 library(tidyverse)
 library(RColorBrewer)
 library(ggpubr)
 library(scales)
+library(sf)
+library(igraph)
 
-#### Units - carbon in wt-%; oxalate-extractable metals in g/kg ####
+### NO NEED TO RUN CODE, FINAL DATASET HAS BEEN SAVED ####
+# The code below allows to group the HLZ zones as proposed in the paper
+
+### Units - carbon in wt-%; oxalate-extractable metals in g/kg 
 
 ## Load modified database
-all_data <- read_csv("./Data/Database_HLZ_2024-05-27.csv")
-
-all_data %>% 
-  count(DESC_filled) %>% 
-  view()
+all_data <- read_csv("./Data/Database_HLZ_2024-08-14.csv")
 
 all_data %>% 
   summarise(n = n(),
             n_profiles = n_distinct(ID))
 
-skimr::skim_without_charts(all_data)
+# skimr::skim_without_charts(all_data)
 
 ## HLZ grouping based on temperature and moisture
 all_data_grp <- all_data %>% 
@@ -75,8 +75,18 @@ all_data_grp <- all_data %>%
     HLZ_moist_full == "perhumid" ~ "perhumid",
     HLZ_moist_full == "superhumid" ~ "perhumid"
   )) %>% 
-  unite("HLZ_new", HLZ_temp1, HLZ_moist_full,remove = FALSE, sep = " ")
+  unite("HLZ_new", HLZ_temp1, HLZ_moist_full,remove = FALSE, sep = " ") %>% 
+  # Group soils based on age + loess
+  mutate(soil_age = case_when(
+    grepl("Loess", sediment_class) ~ "young",
+    lgm_vegetation_type == "Ice sheet and other permanent ice" ~ "young",
+    lgm_vegetation_type == "Polar and alpine desert" ~ "young",
+    # grepl("tundra", lgm_vegetation_type) ~ "young",
+    # lgm_vegetation_type == "Tundra" ~ "young",
+    TRUE ~ "old"
+  ))
 
+# Save final file
 write_csv(x = all_data_grp, file = paste0("./Data/Database_HLZ_grp_", 
                                           Sys.Date(), ".csv"))
 

@@ -1,0 +1,39 @@
+﻿ZONE,DESC_filled,area_km2_10_6,HLZ_temp,HLZ_temp1,HLZ_moist_full,HLZ_moist,HLZ_new
+1,Ice,0.5,(sub-)polar,polar,,,
+2,Polar desert,9.8,(sub-)polar,polar,humid,humid,polar humid
+3,Polar dry tundra,0.5,(sub-)polar,subpolar,subhumid,subhumid,subpolar subhumid
+4,Polar moist tundra,2.5,(sub-)polar,subpolar,humid,humid,subpolar humid
+5,Polar wet tundra,4.7,(sub-)polar,subpolar,perhumid,perhumid,subpolar perhumid
+6,Polar rain tundra,1.7,(sub-)polar,subpolar,superhumid,perhumid,subpolar superhumid
+7,Boreal desert,0.4,boreal,boreal,semiarid,semiarid,boreal semiarid
+8,Boreal dry bush,1.9,boreal,boreal,subhumid,subhumid,boreal subhumid
+9,Boreal moist forest,9.7,boreal,boreal,humid,humid,boreal humid
+10,Boreal wet forest,4.4,boreal,boreal,perhumid,perhumid,boreal perhumid
+11,Boreal rain forest,0.9,boreal,boreal,superhumid,perhumid,boreal superhumid
+12,Cool temperate desert,1.5,cool temperate,cool temperate,arid,arid,cool temperate arid
+13,Cool temperate desert bush,2.5,cool temperate,cool temperate,semiarid,semiarid,cool temperate semiarid
+14,Cool temperate steppe,7.4,cool temperate,cool temperate,subhumid,subhumid,cool temperate subhumid
+15,Cool temperate moist forest,8.2,cool temperate,cool temperate,humid,humid,cool temperate humid
+16,Cool temperate wet forest,1.5,cool temperate,cool temperate,perhumid,perhumid,cool temperate perhumid
+17,Cool temperate rain forest,0.3,cool temperate,cool temperate,superhumid,perhumid,cool temperate superhumid
+18,Warm temperate desert,0.7,warm temperate,warm temperate,perarid,arid,warm temperate perarid
+19,Warm temperate desert bush,1.8,warm temperate,warm temperate,arid,arid,warm temperate arid
+20,Warm temperate thorn steppe,2.3,warm temperate,warm temperate,semiarid,semiarid,warm temperate semiarid
+21,Warm temperate dry forest,3.3,warm temperate,warm temperate,subhumid,subhumid,warm temperate subhumid
+22,Warm temperate moist forest,2.9,warm temperate,warm temperate,humid,humid,warm temperate humid
+23,Warm temperate wet forest,0.2,warm temperate,warm temperate,perhumid,perhumid,warm temperate perhumid
+24,Warm temperate rain forest,0.1,warm temperate,warm temperate,superhumid,perhumid,warm temperate superhumid
+25,Subtropical desert,7.4,subtropical,subtropical,perarid,arid,subtropical perarid
+26,Subtropical desert bush,5.4,subtropical,subtropical,arid,arid,subtropical arid
+27,Subtropical thorn steppe,4.4,subtropical,subtropical,semiarid,semiarid,subtropical semiarid
+28,Subtropical dry forest,8.2,subtropical,subtropical,subhumid,subhumid,subtropical subhumid
+29,Subtropical moist forest,15.1,subtropical,subtropical,humid,humid,subtropical humid
+30,Subtropical wet forest,2.8,subtropical,subtropical,perhumid,perhumid,subtropical perhumid
+31,Subtropical rain forest,0.1,subtropical,subtropical,superhumid,perhumid,subtropical superhumid
+32,Tropical desert,3.9,tropical,tropical,superarid,arid,tropical superarid
+33,Tropical desert bush,1.6,tropical,tropical,perarid,arid,tropical perarid
+34,Tropical thorn steppe,1.9,tropical,tropical,arid,arid,tropical arid
+35,Tropical very dry forest,3.3,tropical,tropical,semiarid,semiarid,tropical semiarid
+36,Tropical dry forest,6.6,tropical,tropical,subhumid,subhumid,tropical subhumid
+37,Tropical moist forest,5.3,tropical,tropical,humid,humid,tropical humid
+38,Tropical wet forest,0.2,tropical,tropical,perhumid,perhumid,tropical perhumid

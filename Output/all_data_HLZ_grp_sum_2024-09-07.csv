@@ -1,0 +1,35 @@
+ZONE_filled,DESC_filled,HLZ_new,HLZ_moist,HLZ_temp,n_profiles
+2,Polar desert,polar humid,humid,(sub-)polar,185
+3,Polar dry tundra,subpolar subhumid,subhumid,(sub-)polar,5
+4,Polar moist tundra,subpolar humid,humid,(sub-)polar,133
+5,Polar wet tundra,subpolar perhumid,perhumid,(sub-)polar,99
+6,Polar rain tundra,subpolar superhumid,perhumid,(sub-)polar,109
+7,Boreal desert,boreal semiarid,semiarid,boreal,5
+8,Boreal dry bush,boreal subhumid,subhumid,boreal,79
+9,Boreal moist forest,boreal humid,humid,boreal,351
+10,Boreal wet forest,boreal perhumid,perhumid,boreal,563
+11,Boreal rain forest,boreal superhumid,perhumid,boreal,94
+12,Cool temperate desert,cool temperate arid,arid,cool temperate,18
+13,Cool temperate desert bush,cool temperate semiarid,semiarid,cool temperate,143
+14,Cool temperate steppe,cool temperate subhumid,subhumid,cool temperate,957
+15,Cool temperate moist forest,cool temperate humid,humid,cool temperate,3404
+16,Cool temperate wet forest,cool temperate perhumid,perhumid,cool temperate,627
+17,Cool temperate rain forest,cool temperate superhumid,perhumid,cool temperate,48
+18,Warm temperate desert,warm temperate perarid,arid,warm temperate,6
+19,Warm temperate desert bush,warm temperate arid,arid,warm temperate,62
+20,Warm temperate thorn steppe,warm temperate semiarid,semiarid,warm temperate,230
+21,Warm temperate dry forest,warm temperate subhumid,subhumid,warm temperate,645
+22,Warm temperate moist forest,warm temperate humid,humid,warm temperate,719
+23,Warm temperate wet forest,warm temperate perhumid,perhumid,warm temperate,53
+24,Warm temperate rain forest,warm temperate superhumid,perhumid,warm temperate,2
+26,Subtropical desert bush,subtropical arid,arid,subtropical,8
+27,Subtropical thorn steppe,subtropical semiarid,semiarid,subtropical,203
+28,Subtropical dry forest,subtropical subhumid,subhumid,subtropical,661
+29,Subtropical moist forest,subtropical humid,humid,subtropical,896
+30,Subtropical wet forest,subtropical perhumid,perhumid,subtropical,195
+31,Subtropical rain forest,subtropical superhumid,perhumid,subtropical,11
+34,Tropical thorn steppe,tropical arid,arid,tropical,88
+35,Tropical very dry forest,tropical semiarid,semiarid,tropical,156
+36,Tropical dry forest,tropical subhumid,subhumid,tropical,218
+37,Tropical moist forest,tropical humid,humid,tropical,157
+38,Tropical wet forest,tropical perhumid,perhumid,tropical,3

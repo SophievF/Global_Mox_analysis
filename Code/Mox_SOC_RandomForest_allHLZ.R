@@ -18,7 +18,7 @@ library(iml)
 #### Random Forest analysis ####
 
 ## Load and prepare data
-all_data <- read_csv("./Data/Database_HLZ_grp_2024-05-27.csv") %>% 
+all_data <- read_csv("./Data/Database_HLZ_grp_2024-09-09.csv") %>% 
   mutate(al_fe_ox = al_ox + (1/2*fe_ox)) %>% 
   filter(hzn_bot <= 200) %>% 
   mutate(depth_cat = cut(hzn_mid, breaks = c(0, 20, 50, 100, 200), 

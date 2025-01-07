@@ -159,8 +159,6 @@ em_al_fe_humid_data %>%
   scale_fill_discrete("Soil age") +
   scale_x_continuous(expression(paste("Log-scaled concentration in M"[ox])), expand = c(0,0)) +
   scale_y_continuous("Predicted log-scaled SOC", expand = c(0,0), limits = c(-7,3))
-ggsave(file = paste0("./Output/LMM_slopes_soilAge_cool_humid_", 
-                     Sys.Date(), ".jpeg"), width = 14, height = 9)
 
 ### Fit model - subhumid cool
 cool_data_lm_subhumid <- cool_data %>% 

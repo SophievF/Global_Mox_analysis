@@ -9,11 +9,13 @@ library(scales)
 library(nlme)
 library(MuMIn)
 library(emmeans)
+library(sp)
+library(gstat)
 
 #### Linear mixed-effects models: temperature groups
 
 ## Load and prepare data
-all_data <- read_csv("./Data/Database_HLZ_grp_2024-05-27.csv") %>% 
+all_data <- read_csv("./Data/Database_HLZ_grp_2024-09-09.csv") %>% 
   mutate(al_fe_ox = al_ox + (1/2*fe_ox)) %>% 
   filter(hzn_bot <= 200) %>% 
   mutate(depth_cat = cut(hzn_mid, breaks = c(0, 20, 50, 100, 200), 
@@ -72,17 +74,17 @@ hlz_color_moist <- c("#e5e5b7", "#a1dab4", "#41b6c4", "#2c7fb8", "#253494")
 all_data_lm_temp <- all_data %>% 
   drop_na(al_ox, fe_ox) %>% 
   # set 0s to smallest measured value/2 = 0.005
-  dplyr::mutate(al_ox = al_ox + 0.005,
-                carbon = carbon + 0.005,
-                fe_ox = fe_ox + 0.005,
-                al_fe_ox = al_fe_ox + 0.005) %>% 
-  mutate_if(is.integer, as.numeric) %>% 
-  group_by(HLZ_temp) %>% 
-  mutate_at(c("carbon", "al_ox", "hzn_mid", "fe_ox", "al_fe_ox"), 
-            ~predict(bestNormalize::boxcox(.x))) %>% 
-  ungroup()
+  dplyr::mutate(al_ox = log(al_ox + 0.005),
+                carbon = log(carbon + 0.005),
+                fe_ox = log(fe_ox + 0.005),
+                al_fe_ox = log(al_fe_ox + 0.005))
 
 skimr::skim_without_charts(all_data_lm_temp)
+
+all_data_lm_temp %>% 
+  ggplot(aes(y = al_fe_ox, x = HLZ_temp)) +
+  geom_boxplot() +
+  facet_wrap(~depth_cat)
 
 ### Fit model
 ## Alox + 1/2 Feox
@@ -116,10 +118,30 @@ R_Final <- residuals(lmm_al_fe_depth_temp, type = "response", scaled = TRUE) #ty
 hist(R_Final)
 boxplot(R_Final ~ all_data_lm_temp$HLZ_temp)
 boxplot(R_Final ~ all_data_lm_temp$depth_cat)
-plot(R_Final ~ all_data_lm_temp$hzn_mid)
 plot(R_Final ~ all_data_lm_temp$al_fe_ox)
 
-#--> looks all good: similar variance across groups and generally homogenous
+# Partial residual plots
+mox_c <- fixef(lmm_al_fe_depth_temp)[2] #predictor coefficient
+mox_pr <- R_Final + mox_c * all_data_lm_temp$al_fe_ox
+
+{scatter.smooth(all_data_lm_temp$al_fe_ox, mox_pr,
+                lpars = list(col = "green", lwd = 3, lty = 3)) #residual loess
+  abline(lm(mox_c*all_data_lm_temp$al_fe_ox ~ all_data_lm_temp$al_fe_ox), col = "red")}
+
+#--> looks all good: similar variance across groups and generally homogeneous
+
+# Check for spatial correlation
+resid_norm <- resid(lmm_al_fe_depth_temp, type = "normalized")
+data_temp <- data.frame(resid_norm, all_data_lm_temp$Longitude, 
+                         all_data_lm_temp$Latitude)
+coordinates(data_temp) <- c("all_data_lm_temp.Longitude",
+                            "all_data_lm_temp.Latitude")
+bubble(data_temp, "resid_norm", col = c("black", "grey"),
+       main = "Normalised residuals",
+       xlab = "X-coordinates", ylab = "Y-coordinates")
+
+Vario1 <- variogram(resid_norm ~ 1, data_temp)
+plot(Vario1)
 
 ## Alox
 # Random slope for depth
@@ -152,10 +174,30 @@ R_Final <- residuals(lmm_al_depth_temp, type = "response", scaled = TRUE) #type=
 hist(R_Final)
 boxplot(R_Final ~ all_data_lm_temp$HLZ_temp)
 boxplot(R_Final ~ all_data_lm_temp$depth_cat)
-plot(R_Final ~ all_data_lm_temp$hzn_mid)
 plot(R_Final ~ all_data_lm_temp$al_ox)
 
+# Partial residual plots
+mox_c <- fixef(lmm_al_depth_temp)[2] #predictor coefficient
+mox_pr <- R_Final + mox_c * all_data_lm_temp$al_ox
+
+{scatter.smooth(all_data_lm_temp$al_ox, mox_pr,
+                lpars = list(col = "green", lwd = 3, lty = 3)) #residual loess
+  abline(lm(mox_c*all_data_lm_temp$al_ox ~ all_data_lm_temp$al_ox), col = "red")}
+
 #--> looks all good: similar variance across groups and generally homogenous
+
+# Check for spatial correlation
+resid_norm <- resid(lmm_al_depth_temp, type = "normalized")
+data_temp <- data.frame(resid_norm, all_data_lm_temp$Longitude, 
+                        all_data_lm_temp$Latitude)
+coordinates(data_temp) <- c("all_data_lm_temp.Longitude",
+                            "all_data_lm_temp.Latitude")
+bubble(data_temp, "resid_norm", col = c("black", "grey"),
+       main = "Normalised residuals",
+       xlab = "X-coordinates", ylab = "Y-coordinates")
+
+Vario2 <- variogram(resid_norm ~ 1, data_temp)
+plot(Vario2)
 
 ## Feox
 # Random slope for depth
@@ -188,20 +230,41 @@ R_Final <- residuals(lmm_fe_depth_temp, type = "response", scaled = TRUE) #type=
 hist(R_Final)
 boxplot(R_Final ~ all_data_lm_temp$HLZ_temp)
 boxplot(R_Final ~ all_data_lm_temp$depth_cat)
-plot(R_Final ~ all_data_lm_temp$hzn_mid)
 plot(R_Final ~ all_data_lm_temp$fe_ox)
 
+# Partial residual plots
+mox_c <- fixef(lmm_al_depth_temp)[2] #predictor coefficient
+mox_pr <- R_Final + mox_c * all_data_lm_temp$fe_ox
+
+{scatter.smooth(all_data_lm_temp$fe_ox, mox_pr,
+                lpars = list(col = "green", lwd = 3, lty = 3)) #residual loess
+  abline(lm(mox_c*all_data_lm_temp$fe_ox ~ all_data_lm_temp$fe_ox), col = "red")}
+
+# Check for spatial correlation
+resid_norm <- resid(lmm_fe_depth_temp, type = "normalized")
+data_temp <- data.frame(resid_norm, all_data_lm_temp$Longitude, 
+                        all_data_lm_temp$Latitude)
+coordinates(data_temp) <- c("all_data_lm_temp.Longitude",
+                            "all_data_lm_temp.Latitude")
+bubble(data_temp, "resid_norm", col = c("black", "grey"),
+       main = "Normalised residuals",
+       xlab = "X-coordinates", ylab = "Y-coordinates")
+
+Vario3 <- variogram(resid_norm ~ 1, data_temp)
+plot(Vario3)
+
 ## Compare all three models (based on method = Maximum Likelihood)
-# lmm_al_fe_depth_temp_ML <- lme(carbon ~ al_fe_ox*HLZ_temp + al_fe_ox*depth_cat + al_fe_ox*HLZ_temp*depth_cat, 
+# lmm_al_fe_depth_temp_ML <- lme(carbon ~ al_fe_ox*HLZ_temp + al_fe_ox*depth_cat + al_fe_ox*HLZ_temp*depth_cat,
 #                             random = ~hzn_mid|ID, method = "ML",
 #                             data = all_data_lm_temp)
-# lmm_al_depth_temp_ML <- lme(carbon ~ al_ox*HLZ_temp + al_ox*depth_cat + al_ox*HLZ_temp*depth_cat, 
+# lmm_al_depth_temp_ML <- lme(carbon ~ al_ox*HLZ_temp + al_ox*depth_cat + al_ox*HLZ_temp*depth_cat,
 #                             random = ~hzn_mid|ID, method = "ML",
 #                             data = all_data_lm_temp)
-# lmm_fe_depth_temp_ML <- lme(carbon ~ fe_ox*HLZ_temp + fe_ox*depth_cat + fe_ox*HLZ_temp*depth_cat, 
+# lmm_fe_depth_temp_ML <- lme(carbon ~ fe_ox*HLZ_temp + fe_ox*depth_cat + fe_ox*HLZ_temp*depth_cat,
 #                             random = ~hzn_mid|ID, method = "ML",
 #                             data = all_data_lm_temp)
-# AIC(lmm_al_fe_depth_temp_ML, lmm_al_depth_temp_ML, lmm_fe_depth_temp_ML)
+# 
+# anova(lmm_al_fe_depth_temp_ML, lmm_al_depth_temp_ML, lmm_fe_depth_temp_ML)
 
 ### Post-Hoc analysis
 ## Alox + 1/2 Feox
@@ -217,6 +280,9 @@ em_al_fe_temp$emtrends
 em_al_fe_temp$contrasts
 #significant differences between slopes
 
+as.data.frame(em_al_fe_temp$contrasts) %>% 
+  filter(p.value <= 0.05) 
+
 emip_al_fe_temp <- emmip(lmm_al_fe_depth_temp, HLZ_temp ~ al_fe_ox | depth_cat, cov.reduce = range, 
                          plotit = FALSE, CIs = TRUE)
 
@@ -225,11 +291,14 @@ emip_al_fe_temp$HLZ_temp <- as.ordered(emip_al_fe_temp$HLZ_temp)
 emip_al_fe_data_temp <- emip_al_fe_temp %>% 
   as.data.frame() %>% 
   left_join(all_data %>% 
-              distinct(DESC_filled, ZONE_filled, HLZ_temp), 
+              distinct(HLZ_temp), 
             multiple = "all")
 
 emip_al_fe_data_temp$HLZ_temp <- factor(emip_al_fe_data_temp$HLZ_temp, 
-                                   levels = unique(emip_al_fe_data_temp$HLZ_temp[order(emip_al_fe_data_temp$ZONE_filled)]), 
+                                        levels = c("(sub-)polar", "boreal", 
+                                                   "cool temperate",
+                                                   "warm temperate", "subtropical",
+                                                   "tropical"), 
                                    ordered = TRUE)
 
 emip_al_fe_temp %>%   
@@ -242,12 +311,33 @@ emip_al_fe_temp %>%
   facet_wrap(~depth_cat) +
   scale_color_manual("Temperature groups", values = hlz_color_temp) +
   scale_fill_manual("Temperature groups", values = hlz_color_temp) +
-  scale_x_continuous(expression(paste("Relative concentration in M"[ox], " within each temperature group")),
-                     labels = c("", "low", "", "", "high", ""), expand = c(0,0)) +
-  scale_y_continuous("Relative predicted SOC content", limits = c(-4.5,4), expand = c(0,0),
-                     labels = c("low", "", "", "", "high"))
+  scale_x_continuous(expression(paste("Log-scaled concentration in M"[ox])),
+                     expand = c(0,0)) +
+  scale_y_continuous("Predicted log-scaled SOC content", limits = c(-5,3), 
+                     expand = c(0,0))
 ggsave(file = paste0("./Output/Figure4_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 7)
+
+emip_al_fe_temp %>%   
+  ggplot(aes(x = al_fe_ox, y = yvar)) +
+  geom_point(data = all_data_lm_temp, aes(x = al_fe_ox, y = carbon, 
+                                           color = HLZ_temp),
+             shape = 21) +
+  geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = HLZ_temp), alpha = 0.25) +
+  geom_line(aes(color = HLZ_temp), linewidth = 1.5) +
+  theme_bw(base_size = 18) +
+  theme(axis.text = element_text(color = "black"),
+        axis.ticks = element_blank(),
+        legend.position = "none") +
+  facet_wrap(vars(depth_cat, HLZ_temp), ncol = 6) +
+  scale_color_manual("Temperature group", values = hlz_color_temp) +
+  scale_fill_manual("Temperature group", values = hlz_color_temp) +
+  scale_x_continuous(expression(paste("Log-scaled concentration in M"[ox])),
+                     breaks = seq(-5,5,2.5)) +
+  scale_y_continuous("Predicted log-scaled SOC content",
+                     breaks = seq(-5,2.5,2.5))
+ggsave(file = paste0("./Output/FigureA15_", 
+                     Sys.Date(), ".jpeg"), width = 10, height = 12)
 
 # Prepare data for summary table
 all_data_mox_summary <- all_data %>% 
@@ -269,14 +359,20 @@ mox_n_samples <- all_data %>%
   summarise(n = n())
 
 all_data_mox_summary$HLZ_temp <- factor(all_data_mox_summary$HLZ_temp, 
-                                        levels = unique(all_data$HLZ_temp[order(all_data$ZONE_filled)]), 
+                                        levels = c("(sub-)polar", "boreal", 
+                                                   "cool temperate",
+                                                   "warm temperate", "subtropical",
+                                                   "tropical"), 
                                         ordered = TRUE)
 
 em_al_fe_temp_slopes <- em_al_fe_temp$emtrends %>% 
   as.data.frame()
 
 em_al_fe_temp_slopes$HLZ_temp <- factor(em_al_fe_temp_slopes$HLZ_temp, 
-                                         levels = unique(all_data$HLZ_temp[order(all_data$ZONE_filled)]), 
+                                        levels = c("(sub-)polar", "boreal", 
+                                                   "cool temperate",
+                                                   "warm temperate", "subtropical",
+                                                   "tropical"), 
                                          ordered = TRUE)
 
 em_al_fe_temp_slopes$depth_cat <- factor(em_al_fe_temp_slopes$depth_cat,
@@ -311,11 +407,14 @@ emip_al_temp$HLZ_temp <- as.ordered(emip_al_temp$HLZ_temp)
 emip_al_data_temp <- emip_al_temp %>% 
   as.data.frame() %>% 
   left_join(all_data %>% 
-              distinct(DESC_filled, ZONE_filled, HLZ_temp), 
+              distinct(HLZ_temp), 
               multiple = "all")
 
 emip_al_data_temp$HLZ_temp <- factor(emip_al_data_temp$HLZ_temp, 
-                                     levels = unique(emip_al_data_temp$HLZ_temp[order(emip_al_data_temp$ZONE_filled)]), 
+                                     levels = c("(sub-)polar", "boreal", 
+                                                "cool temperate",
+                                                "warm temperate", "subtropical",
+                                                "tropical"), 
                                      ordered = TRUE)
 
 emip_al_temp %>%   
@@ -328,11 +427,10 @@ emip_al_temp %>%
   facet_wrap(~depth_cat) +
   scale_color_manual("Temperature groups", values = hlz_color_temp) +
   scale_fill_manual("Temperature groups", values = hlz_color_temp) +
-  scale_x_continuous(expression(paste("Relative concentration in Al"[ox], " within each temperature group")),
-                     labels = c("", "low", "", "", "high", ""), expand = c(0,0)) +
-  scale_y_continuous("Relative predicted SOC content", limits = c(-4.5,4), expand = c(0,0),
-                     labels = c("low", "", "", "", "high"))
-ggsave(file = paste0("./Output/FigureA12_", 
+  scale_x_continuous(expression(paste("Log-scaled concentration in Al"[ox])),
+                     expand = c(0,0)) +
+  scale_y_continuous("Predicted log-scaled SOC content", limits = c(-5,3.1), expand = c(0,0))
+ggsave(file = paste0("./Output/FigureA16_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 7)
 
 ## Feox
@@ -355,11 +453,14 @@ emip_fe_temp$HLZ_temp <- as.ordered(emip_fe_temp$HLZ_temp)
 emip_fe_data_temp <- emip_fe_temp %>% 
   as.data.frame() %>% 
   left_join(all_data %>% 
-              distinct(DESC_filled, ZONE_filled, HLZ_temp), 
+              distinct(HLZ_temp), 
             multiple = "all")
 
 emip_fe_data_temp$HLZ_temp <- factor(emip_fe_data_temp$HLZ_temp, 
-                                     levels = unique(emip_fe_data_temp$HLZ_temp[order(emip_fe_data_temp$ZONE_filled)]), 
+                                     levels = c("(sub-)polar", "boreal", 
+                                                "cool temperate",
+                                                "warm temperate", "subtropical",
+                                                "tropical"), 
                                      ordered = TRUE)
 
 emip_fe_temp %>%   
@@ -372,10 +473,9 @@ emip_fe_temp %>%
   facet_wrap(~depth_cat) +
   scale_color_manual("Temperature groups", values = hlz_color_temp) +
   scale_fill_manual("Temperature groups", values = hlz_color_temp) +
-  scale_x_continuous(expression(paste("Relative concentration in Fe"[ox], " within each temperature group")),
-                     labels = c("", "low", "", "", "high"), expand = c(0,0)) +
-  scale_y_continuous("Relative predicted SOC content", limits = c(-2.7,2.7), expand = c(0,0),
-                     labels = c("", "low", "", "", "", "high", ""))
-ggsave(file = paste0("./Output/FigureA13_", 
+  scale_x_continuous(expression(paste("Relative concentration in Fe"[ox])),
+                     expand = c(0,0)) +
+  scale_y_continuous("Predicted log-scaled SOC content", limits = c(-5,3.1), expand = c(0,0))
+ggsave(file = paste0("./Output/FigureA16_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 7)
 

@@ -1,0 +1,5 @@
+numDF,denDF,F-value,p-value,predictor
+1,26017,2680.254077516179,0,(Intercept)
+1,26017,10891.463954657134,0,al_fe_ox
+3,26017,6499.379614850882,0,depth_cat
+3,26017,38.42282763303931,0,al_fe_ox:depth_cat

@@ -9,11 +9,13 @@ library(scales)
 library(nlme)
 library(MuMIn)
 library(emmeans)
+library(sp)
+library(gstat)
 
 #### Linear mixed-effects models: all HLZ ####
 
 ## Load and prepare data
-all_data <- read_csv("./Data/Database_HLZ_grp_2024-05-27.csv") %>% 
+all_data <- read_csv("./Data/Database_HLZ_grp_2024-09-09.csv") %>% 
   mutate(al_fe_ox = al_ox + (1/2*fe_ox)) %>% 
   filter(hzn_bot <= 200) %>% 
   mutate(depth_cat = cut(hzn_mid, breaks = c(0, 20, 50, 100, 200), 
@@ -67,13 +69,10 @@ cor.test(all_data$al_ox, all_data$fe_ox, method = "spearman")
 all_data_lm_depth <- all_data %>% 
   drop_na(al_ox, fe_ox) %>% 
   # set 0s to smallest measured value/2 = 0.005
-  dplyr::mutate(al_ox = al_ox + 0.005,
-                carbon = carbon + 0.005,
-                fe_ox = fe_ox + 0.005,
-                al_fe_ox = al_fe_ox + 0.005) %>% 
-  mutate_at(c("carbon", "al_ox", "hzn_mid", "fe_ox", "al_fe_ox"), 
-            ~predict(bestNormalize::boxcox(.x))) %>% 
-  ungroup()
+  dplyr::mutate(al_ox = log(al_ox + 0.005),
+                carbon = log(carbon + 0.005),
+                fe_ox = log(fe_ox + 0.005),
+                al_fe_ox = log(al_fe_ox + 0.005)) 
 
 ### Fit model
 ## Mox
@@ -118,6 +117,28 @@ mox_pr <- R_Final + mox_c * all_data_lm_depth$al_fe_ox
 
 #--> looks all good: similar variance across groups and generally homogeneous
 
+# Check for spatial correlation
+resid_norm <- resid(lmm_al_fe_depth_wo_HLZ, type = "normalized")
+data_noHLZ <- data.frame(resid_norm, all_data_lm_depth$Longitude, 
+                         all_data_lm_depth$Latitude)
+coordinates(data_noHLZ) <- c("all_data_lm_depth.Longitude",
+                            "all_data_lm_depth.Latitude")
+
+bubble_p <- bubble(data_noHLZ, "resid_norm", col = c("black", "grey"),
+                   main = "Normalised residuals",
+                   xlab = "X-coordinates", ylab = "Y-coordinates")
+
+jpeg(filename = paste0("./Output/FigureA2_", Sys.Date(), ".jpeg"),
+     width = 880, height = 480)
+plot(bubble_p)
+dev.off()
+
+Vario1 <- variogram(resid_norm ~ 1, data_noHLZ)
+jpeg(filename = paste0("./Output/FigureA1_", Sys.Date(), ".jpeg"),
+     width = 880, height = 480)
+plot(Vario1)
+dev.off()
+
 ### Post-Hoc analysis
 ## Mox
 em_al_fe_depth <- emtrends(lmm_al_fe_depth_wo_HLZ, "depth_cat", var = "al_fe_ox")
@@ -132,10 +153,10 @@ em_al_fe_depth %>%
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
   theme_bw(base_size = 14) +
   theme(axis.text = element_text(color = "black")) +
-  scale_y_continuous("Slope: SOC ~ Mox", expand = c(0,0), limits = c(0,0.5)) +
+  scale_y_continuous("Slope: SOC ~ Mox", expand = c(0,0), limits = c(0,0.6)) +
   scale_x_discrete("Depth")
 
-em_al_fe_depth %>% 
+em_al_fe_depth_df <- em_al_fe_depth %>% 
   as.data.frame()
 
 ### Prepare data for model w/ HLZ
@@ -152,14 +173,10 @@ all_data_lm_HLZ <- all_data %>%
   #remove HLZ with too little data
   filter(!DESC_filled %in% rm_HLZ$DESC_filled) %>% 
   # set 0s to smallest measured value/2 = 0.005
-  dplyr::mutate(al_ox = al_ox + 0.005,
-                carbon = carbon + 0.005,
-                fe_ox = fe_ox + 0.005,
-                al_fe_ox = al_fe_ox + 0.005) %>% 
-  mutate_if(is.integer, as.numeric) %>% 
-  mutate_at(c("carbon", "al_ox", "hzn_mid", "fe_ox", "al_fe_ox"), 
-            ~predict(bestNormalize::boxcox(.x))) %>% 
-  ungroup()
+  dplyr::mutate(al_ox = log(al_ox + 0.005),
+                carbon = log(carbon + 0.005),
+                fe_ox = log(fe_ox + 0.005),
+                al_fe_ox = log(al_fe_ox + 0.005)) 
 
 skimr::skim_without_charts(all_data_lm_HLZ)
 
@@ -221,6 +238,20 @@ mox_pr <- R_Final + mox_c * all_data_lm_HLZ$al_fe_ox
 
 #--> looks all good: similar variance across groups and generally homogeneous
 
+
+# Check for spatial correlation
+resid_norm <- resid(lmm_al_fe_HLZ_depth, type = "normalized")
+data_HLZ <- data.frame(resid_norm, all_data_lm_HLZ$Longitude, 
+                       all_data_lm_HLZ$Latitude)
+coordinates(data_HLZ) <- c("all_data_lm_HLZ.Longitude",
+                           "all_data_lm_HLZ.Latitude")
+bubble(data_HLZ, "resid_norm", col = c("black", "grey"),
+       main = "Normalised residuals",
+       xlab = "X-coordinates", ylab = "Y-coordinates")
+
+Vario1 <- variogram(resid_norm ~ 1, data_HLZ)
+plot(Vario1)
+
 ### Post-Hoc analysis
 ## Mox
 em_al_fe_HLZ <- emtrends(lmm_al_fe_HLZ_depth, pairwise ~ HLZ_new | depth_cat, 
@@ -259,7 +290,7 @@ em_al_fe_HLZ_data %>%
   scale_color_manual("HLZ zones", values = hlz_color_red) +
   scale_fill_manual("HLZ zones", values = hlz_color_red) +
   scale_x_continuous(expression(paste("M"[ox])), expand = c(0,0)) +
-  scale_y_continuous("Linear predicted SOC", expand = c(0,0), limits = c(-7,5))
+  scale_y_continuous("Linear predicted SOC", expand = c(0,0))
 
 
 em_al_fe_HLZ_trends <- em_al_fe_HLZ$emtrends %>% 
@@ -273,11 +304,12 @@ em_al_fe_HLZ_trends %>%
               distinct(DESC_filled, ZONE_filled, HLZ_moist, HLZ_temp, HLZ_new), 
             multiple = "all") %>% 
   ggplot(aes(x = HLZ_new, y = al_fe_ox.trend)) +
-  geom_hline(data = em_al_fe_wo_HLZ, mapping = aes(yintercept = al_fe_ox.trend)) +
-  geom_hline(data = em_al_fe_wo_HLZ, mapping = aes(yintercept = lower.CL),
+  geom_hline(data = em_al_fe_depth_df, mapping = aes(yintercept = al_fe_ox.trend)) +
+  geom_hline(data = em_al_fe_depth_df, mapping = aes(yintercept = lower.CL),
              linetype = "dashed") +
-  geom_hline(data = em_al_fe_wo_HLZ, mapping = aes(yintercept = upper.CL),
+  geom_hline(data = em_al_fe_depth_df, mapping = aes(yintercept = upper.CL),
              linetype = "dashed") +
+  geom_vline(xintercept = c(4.5, 8.5, 14.5, 19.4, 22.6), linewidth = 0.25) +
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
   geom_point(aes(fill = HLZ_new), size = 3, shape = 21) +
   theme_bw(base_size = 18) +
@@ -287,8 +319,20 @@ em_al_fe_HLZ_trends %>%
         legend.position = "none") +
   facet_wrap(~depth_cat) +
   scale_y_continuous(expression(paste("Linear predicted slope: SOC ~ M"[ox])), expand = c(0,0),
-                     limits = c(-0.4,1.1), breaks = seq(-0.4,1,0.2)) +
-  scale_fill_manual("HLZ zones", values = hlz_color_red) 
+                     limits = c(-0.4,1.2), breaks = seq(-0.4,1.2,0.4)) +
+  scale_fill_manual("HLZ zones", values = hlz_color_red) +
+  annotate(geom = "text", y = 1.1, x = 2.5, label = "(sub-)polar", size = 4,
+           fontface = "italic") +
+  annotate(geom = "text", y = 1.1, x = 6.5, label = "boreal", size = 4,
+         fontface = "italic") +
+  annotate(geom = "text", y = 1.1, x = 11.5, label = "cool temperate", size = 4,
+           fontface = "italic") +
+  annotate(geom = "text", y = 1.1, x = 17, label = "warm temperate", size = 4,
+           fontface = "italic") +
+  annotate(geom = "text", y = 1.1, x = 21, label = "subtropical", size = 4,
+           fontface = "italic") +
+  annotate(geom = "text", y = 1.1, x = 24, label = "tropical", size = 4,
+           fontface = "italic")
 ggsave(file = paste0("./Output/Figure5_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 9)
 

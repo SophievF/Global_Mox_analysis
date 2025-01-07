@@ -339,7 +339,7 @@ p_alox.1 <- p_alox +
 ggarrange(p_alox.1, p_feox, nrow = 2, heights = c(1,1.35),
           labels = c("a)", "b)"), vjust = c(1.5, 1))
 
-ggsave(file = paste0("./Output/FigureA3_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA5_", Sys.Date(), ".jpeg"), 
        width = 13, height = 9)
 
 ## Statistical test: Kruskal-Wallis & Dunn test
@@ -389,7 +389,7 @@ dunn_test_all_SOC %>%
   geom_text(x = 21.5, y = 16.5, label = "warm temperate", color = hlz_color_temp[4]) +
   geom_text(x = 28, y = 23.5, label = "subtropical", color = hlz_color_temp[5]) +
   geom_text(x = 32.5, y = 29.5, label = "tropical", color = hlz_color_temp[6])
-ggsave(file = paste0("./Output/FigureA2_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA4_", Sys.Date(), ".jpeg"), 
        width = 14, height = 8)
 
 # Mox
@@ -443,7 +443,7 @@ dunn_test_all %>%
   geom_text(x = 21.5, y = 16.5, label = "warm temperate", color = hlz_color_temp[4]) +
   geom_text(x = 28, y = 23.5, label = "subtropical", color = hlz_color_temp[5]) +
   geom_text(x = 32.5, y = 29.5, label = "tropical", color = hlz_color_temp[6])
-ggsave(file = paste0("./Output/FigureA1_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA3_", Sys.Date(), ".jpeg"), 
        width = 14, height = 8)
 
 ### By moisture
@@ -466,7 +466,7 @@ plot_box_moist(all_data_depth %>%
                y = "carbon")  +
   scale_y_continuous("SOC [wt-%]",
                      expand = c(0,0), trans = "log1p", limits = c(0,21))
-ggsave(file = paste0("./Output/FigureA5_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA7_", Sys.Date(), ".jpeg"), 
        width = 13, height = 7)
 
 all_data_depth %>% 
@@ -488,7 +488,7 @@ plot_box_moist(dataset = all_data_depth %>%
                  drop_na(al_fe_ox), y = "al_fe_ox") +
   scale_y_continuous(expression(paste("M"[ox], " [g/kg]")),
                      expand = c(0,0), trans = "log1p", limits = c(0,176))
-ggsave(file = paste0("./Output/FigureA4_", Sys.Date(), ".jpeg"),
+ggsave(file = paste0("./Output/FigureA6_", Sys.Date(), ".jpeg"),
        width = 13, height = 7)
 
 all_data_depth %>% 
@@ -525,7 +525,7 @@ plot_box_temp(all_data_depth %>%
               y = "carbon") +
   scale_y_continuous("SOC [wt-%]",
                      expand = c(0,0), trans = "log1p", limits = c(0,21))
-ggsave(file = paste0("./Output/FigureA7_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA9_", Sys.Date(), ".jpeg"), 
        width = 13, height = 7)
 
 # SOC
@@ -543,7 +543,7 @@ plot_box_temp(dataset = all_data_depth %>%
                 drop_na(al_fe_ox), y = "al_fe_ox") +
   scale_y_continuous(expression(paste("M"[ox], " [g/kg]")),
                      expand = c(0,0), trans = "log1p", limits = c(0,176))
-ggsave(file = paste0("./Output/FigureA6_", Sys.Date(), ".jpeg"), 
+ggsave(file = paste0("./Output/FigureA8_", Sys.Date(), ".jpeg"), 
        width = 13, height = 7)
 
 all_data_depth %>% 

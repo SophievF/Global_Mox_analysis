@@ -330,7 +330,7 @@ emip_al_fe_moist %>%
                      breaks = seq(-5,5,2.5)) +
   scale_y_continuous("Predicted log-scaled SOC content",
                      breaks = seq(-5,2.5,2.5))
-ggsave(file = paste0("./Output/FigureA8_", 
+ggsave(file = paste0("./Output/FigureA10_", 
                      Sys.Date(), ".jpeg"), width = 12, height = 10)
 
 # Prepare data for summary table
@@ -418,7 +418,7 @@ emip_al_moist %>%
                      expand = c(0,0)) +
   scale_y_continuous("Predicted log-scaled SOC content", 
                      expand = c(0,0), limits = c(-5,3))
-ggsave(file = paste0("./Output/FigureA9_", 
+ggsave(file = paste0("./Output/FigureA11_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 7)
 
 ## Feox
@@ -462,5 +462,5 @@ emip_fe_moist %>%
                      expand = c(0,0)) +
   scale_y_continuous("Predicted log-scaled SOC content", 
                      expand = c(0,0), limits = c(-5,3))
-ggsave(file = paste0("./Output/FigureA10_", 
+ggsave(file = paste0("./Output/FigureA12_", 
                      Sys.Date(), ".jpeg"), width = 14, height = 7)

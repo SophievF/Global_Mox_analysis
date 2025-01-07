@@ -128,7 +128,7 @@ vi_data_sum  %>%
   scale_y_continuous("Relative importance [%]", expand = c(0,0),
                      limits = c(0,40)) +
   scale_x_discrete(labels = c("Alox", "Depth", "Feox", "HLZ all"))
-ggsave(file = paste0("./Output/FigureA11_",
+ggsave(file = paste0("./Output/FigureA14_",
                      Sys.Date(), ".jpeg"), width = 8, height = 6)
 
 rr_data_prediction %>% 
@@ -223,6 +223,6 @@ df_pdp_cont %>%
         panel.spacing.x = unit(1, "line")) +
   scale_x_continuous("Range of predictor", expand = c(0,0)) +
   scale_y_continuous("Predicted SOC content [wt-%]", expand = c(0,0), limits = c(0,8))
-ggsave(file = paste0("./Output/FigureA10_",
+ggsave(file = paste0("./Output/FigureA13_",
                      Sys.Date(), ".jpeg"), width = 11, height = 7)
 

@@ -263,7 +263,7 @@ all_data_depth %>%
   group_by(HLZ_new, soil_age) %>% 
   reframe(n = n()) %>% 
   group_by(HLZ_new) %>% 
-  mutate(rel = n * 100 / sum(n)) %>% view()
+  mutate(rel = n * 100 / sum(n)) %>% 
   ggplot() +
   geom_bar(aes(x = HLZ_new, y = rel, fill = soil_age), stat = "identity") +
   theme_bw(base_size = 14) +
@@ -271,6 +271,8 @@ all_data_depth %>%
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.x = element_blank()) +
   scale_y_continuous("Relative distribution", expand = c(0,0))
+ggsave(file = paste0("./Output/FigureA18_", Sys.Date(), ".jpeg"), 
+       width = 12, height = 6)
 
 #### Data distribution - SOC, Alox, Feox and Mox across HLZ
 ### All HLZ

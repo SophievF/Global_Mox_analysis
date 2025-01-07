@@ -22,8 +22,6 @@ all_data %>%
   summarise(n = n(),
             n_profiles = n_distinct(ID))
 
-# skimr::skim_without_charts(all_data)
-
 ## HLZ grouping based on temperature and moisture
 all_data_grp <- all_data %>% 
   # drop_na(DESC_filled) %>% 
@@ -105,7 +103,9 @@ write_csv(x = all_data_grp_sum, file = paste0("./Output/all_data_HLZ_grp_sum_",
 
 #Subtropical desert, tropical desert and tropical desert bush are missing
 
-##Check sequential extraction from Doetterl_2021
+## Check sequential extraction from Doetterl_2021
+# This is the only study that we are aware of that used a sequential extraction, instead of a parallel one
+# Data looks okay; no need to remove/modify
 all_data %>% 
   filter(grepl("Doetterl_2021", ID)) %>% 
   count(DESC_filled)

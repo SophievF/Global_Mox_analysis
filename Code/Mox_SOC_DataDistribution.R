@@ -13,7 +13,7 @@ library(ggpattern)
 ##Units - carbon in wt-%; oxalate-extractable metals in g/kg
 
 ## Load final database
-all_data <- read_csv("./Data/Database_HLZ_grp_2024-05-27.csv") %>% 
+all_data <- read_csv("./Data/Database_HLZ_grp_2024-09-09.csv") %>% 
   mutate(al_fe_ox = al_ox + (1/2*fe_ox))
 
 names(all_data)
@@ -95,6 +95,24 @@ all_data_depth <- all_data %>%
                          labels = c("0-20cm","20-50cm","50-100cm", "100-200cm"),
                          ordered = TRUE))
 
+# Count number of total samples and unique profiles
+all_data_depth %>% 
+  summarise(n = n(),
+            n_profiles = n_distinct(ID))
+
+# Count number of total samples by HLZ
+all_data_depth %>% 
+  group_by(ZONE_filled, DESC_filled) %>% 
+  summarise(n = n(),
+            n_profiles = n_distinct(ID)) %>% view()
+
+# Look for HLZ that have less than 10 profiles
+all_data_depth %>% 
+  group_by(HLZ_new) %>% 
+  summarise(n = n(),
+            n_profiles = n_distinct(ID)) %>% 
+  filter(n_profiles < 11)
+
 ## Check data again
 skimr::skim_without_charts(all_data_depth)
 
@@ -135,7 +153,7 @@ global_map <- ggplot() +
   scale_x_continuous("", labels = c("100°W", "0", "100°E"), 
                      breaks = c(-100,0,100), expand = c(0,0)) +
   scale_y_continuous("",labels = c("50°S", "0", "50°N"), 
-                     breaks = c(-50,0,50), expand = c(0,0)) 
+                     breaks = c(-50,0,50), expand = c(0,0))
 
 ggsave(file = paste0("./Output/Figure1a_", Sys.Date(), ".jpeg"),
        width = 11, height = 6)
@@ -239,6 +257,20 @@ grid::grid.draw(g)
 
 ggsave(g, file = paste0("./Output/Figure1b_", Sys.Date(), ".jpeg"), 
        width = 12, height = 6)
+
+### Data distribution based on soil age
+all_data_depth %>% 
+  group_by(HLZ_new, soil_age) %>% 
+  reframe(n = n()) %>% 
+  group_by(HLZ_new) %>% 
+  mutate(rel = n * 100 / sum(n)) %>% view()
+  ggplot() +
+  geom_bar(aes(x = HLZ_new, y = rel, fill = soil_age), stat = "identity") +
+  theme_bw(base_size = 14) +
+  theme(axis.text = element_text(color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank()) +
+  scale_y_continuous("Relative distribution", expand = c(0,0))
 
 #### Data distribution - SOC, Alox, Feox and Mox across HLZ
 ### All HLZ
@@ -448,7 +480,6 @@ all_data_depth %>%
   group_by(HLZ_moist) %>% 
   dunn_test(carbon ~ depth_cat, p.adjust.method = "bonferroni") %>% 
   view()
-
 
 # Mox
 plot_box_moist(dataset = all_data_depth %>% 

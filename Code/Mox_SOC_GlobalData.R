@@ -7,17 +7,18 @@ library(raster)
 library(sf)
 library(tmap)
 
+#### NO NEED DO RUN THE CODE, FINAL DATASET HAS BEEN SAVED ####
+# The code belows contains all steps to clean the data and extract global data products
+
 #### Load merged dataset and add global data products
 
-global_data <- read_csv("./Data/Database_all_merged_2024-05-27.csv")
+global_data <- read_csv("./Data/Database_all_merged_2024-08-12.csv")
 
 skimr::skim_without_charts(global_data)
 
 #### Add Holdridge Life Zones (HLZ)
 
 hlz_shp <- sf::read_sf("./Data/HLZ/holdrid/holdrid.shp")
-
-# plot(hlz_shp[,8])
 
 st_crs(hlz_shp) <- 4326
 
@@ -89,12 +90,12 @@ hlz_all_clean <- hlz_all_wo_dup %>%
 ## Add WorldClim data
 # Need to download WorldClim data first
 
-MAP_dir <- "D:/Sophie/PhD/AfSIS_GlobalData/wc2.0_30s_bio/wc2.0_bio_30s_12.tif"
+MAP_dir <- "C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/wc2.0_30s_bio/wc2.0_bio_30s_12.tif"
 MAP_raster <- raster(MAP_dir)
 MAP <- raster::extract(MAP_raster, cbind(hlz_all_clean$Longitude,
                                          hlz_all_clean$Latitude))
 
-MAT_dir <- "D:/Sophie/PhD/AfSIS_GlobalData/wc2.0_30s_bio/wc2.0_bio_30s_01.tif"
+MAT_dir <- "C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/wc2.0_30s_bio/wc2.0_bio_30s_01.tif"
 MAT_raster <- raster(MAT_dir)
 MAT <- raster::extract(MAT_raster, cbind(hlz_all_clean$Longitude,
                                          hlz_all_clean$Latitude))
@@ -262,9 +263,171 @@ hlz_all_fill %>%
   
 skimr::skim_without_charts(hlz_all_fill)
 
+## Add glacial extend during last glacial period
+# https://intarch.ac.uk/journal/issue11/2/index.html
+
+sf_use_s2(FALSE)
+lgm_dir <- "C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/world_cut.shp/world_cut.shp"
+lgm_shp <- read_sf(dsn = lgm_dir, crs = 4326)
+
+lgm_legend <- read_csv("C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/world_cut.shp/lgm_veg_legend.csv")
+
+lgm <- lgm_shp %>% 
+  left_join(lgm_legend) 
+
+hlz_all_fill_sf <- sf::st_as_sf(hlz_all_fill, coords = c("Longitude", "Latitude"), crs = 4326)
+
+lgm_sf <- sf::st_join(hlz_all_fill_sf, lgm)
+
+summary(lgm_sf)
+
+# Convert HLZ spatial dataset back into normal datset with long/lat as columns
+lgm_data <- st_set_geometry(lgm_sf, NULL)
+
+hlz_lgm_all <- lgm_data %>% 
+  left_join(hlz_all_fill)
+
+skimr::skim_without_charts(hlz_lgm_all)
+
+### A few entries get duplicated; because they are at the border of two zones
+lgm_dup <- hlz_lgm_all %>% 
+  janitor::get_dupes(ID, hzn_top, hzn_bot, hzn_mid, carbon, al_ox, fe_ox) 
+
+view(lgm_dup)
+
+# Have a look at duplicated entries
+tmap_mode("view")
+tm_shape(lgm) +
+  tm_polygons(col = "lgm_vegetation_type") +
+  tm_shape(lgm_sf %>% 
+             dplyr::select(ID, geometry, carbon, hzn_top, hzn_bot, al_ox, fe_ox)) +
+  tm_dots()
+
+#Only two profiles that have same long/lat; based on visual inspection they should be "montane tropical forest"
+lgm_all_wo_dup <- hlz_lgm_all %>% 
+  anti_join(lgm_dup)
+
+unnamed_15051 <- hlz_lgm_all %>% 
+  janitor::get_dupes(ID, hzn_top, hzn_bot, hzn_mid, carbon, al_ox, fe_ox) %>% 
+  filter(ID == "(unnamed)_15051" & lgm_vegetation_type == "Montane tropical forest") 
+
+unnamed_15052 <- hlz_lgm_all %>% 
+  janitor::get_dupes(ID, hzn_top, hzn_bot, hzn_mid, carbon, al_ox, fe_ox) %>% 
+  filter(ID == "(unnamed)_15052" & lgm_vegetation_type == "Montane tropical forest") 
+
+hlz_lgm_all_clean <- lgm_all_wo_dup %>% 
+  full_join(unnamed_15051) %>% 
+  full_join(unnamed_15052) %>% 
+  dplyr::select(-dupe_count) 
+
+skimr::skim_without_charts(hlz_lgm_all_clean)
+  
+hlz_lgm_all_clean %>% 
+  distinct(ID, .keep_all = TRUE) %>% 
+  count(glacial)
+
+## Add sediment data
+# https://doi.pangaea.de/10.1594/PANGAEA.884822
+sed_dir <- "C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/Boerker_et_al_GUM_v1.0/GUM_v1.0/gum_v1.0_0point5deg.txt.asc"
+sed_raster <- raster(sed_dir)
+
+sed_legend <- read_csv2("C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/Boerker_et_al_GUM_v1.0/GUM_v1.0/classnames.txt") %>% 
+  mutate(sediment_group = case_when(
+    grepl("A", XX) ~ "Alluvial",
+    grepl("C", XX) ~ "Colluvial",
+    grepl("E", XX) ~ "Aeolian",
+    grepl("G", XX) ~ "Glacial",
+    grepl("D", XX) ~ "Ice",
+    grepl("U", XX) ~ "Undifferentiated",
+    grepl("W", XX) ~ "Water",
+    grepl("Y", XX) ~ "Coastal",
+    grepl("L", XX) ~ "Lacustrine",
+    grepl("O", XX) ~ "Organics",
+    grepl("P", XX) ~ "Evaporites",
+    grepl("M", XX) ~ "Marine",
+    grepl("Z", XX) ~ "Anthropogenic",
+    XX == "Iy" ~ "Pyroclastics"
+  )) %>% 
+  mutate(sediment_class = case_when(
+    XX == "Ae" ~ "Alluvial – Aeolian deposits",
+    XX == "Af" ~ "Alluvial – Fan deposits",
+    XX == "Al" ~ "Alluvial – Lacustrine deposits",
+    XX == "Ap" ~ "Alluvial – Plain deposits",
+    XX == "At" ~ "Alluvial – Terrace deposits",
+    XX == "Au" ~ "Alluvial – Alluvial – Undifferentiated",
+    XX == "Ca" ~ "Colluvial – Alluvial deposits",
+    XX == "Cu" ~ "Colluvial – Undifferentiated",
+    XX == "Ea" ~ "Aeolian – Loess-like silt deposits",
+    XX == "Eu" ~ "Aeolian – Undifferentiated",
+    XX == "Ed" ~ "Aeolian – Dunes",
+    XX == "El" ~ "Aeolian – Loess deposits",
+    XX == "Er" ~ "Aeolian – Loess derivates",
+    XX == "Gt" ~ "Glacial – Till",
+    XX == "Gl" ~ "Glacial – Glaciolacustrine deposits",
+    XX == "Gu" ~ "Glacial – Undifferentiated",
+    XX == "Gf" ~ "Glacial – Fluvioglacial deposits",
+    XX == "Gm" ~ "Glacial – Glaciomarine deposits",
+    XX == "Gp" ~ "Glacial – Proglacial deposits",
+    XX == "Du" ~ "Ice",
+    XX == "Us" ~ "Undifferentiated",
+    XX == "Wu" ~ "Water bodies – Undifferentiated",
+    XX == "Wl" ~ "Water – Lakes",
+    XX == "Wr" ~ "Water – Rivers",
+    XX == "Yu" ~ "Coastal – Undifferentiated",
+    XX == "Ys" ~ "Coastal – Swamp deposits",
+    XX == "Yd" ~ "Coastal – Delta sediments",
+    XX == "Yl" ~ "Coastal – Lagoonal sediments",
+    XX == "Yb" ~ "Coastal – Beach deposits",
+    XX == "Ym" ~ "Coastal – Marsh sediments",
+    XX == "Lu" ~ "Lacustrine deposits",
+    XX == "Op" ~ "Organic – Peat deposits",
+    XX == "Ou" ~ "Organic – Organic – Undifferentiated",
+    XX == "Or" ~ "Organic – Reef deposits",
+    XX == "Ps" ~ "Evaporites – Salt deposits",
+    XX == "Pg" ~ "Evaporites – Gypsum deposits",
+    XX == "Pu" ~ "Evaporites – Undifferentiated",
+    XX == "Pp" ~ "Evaporites – Playa deposits",
+    XX == "Mu" ~ "Marine deposits",
+    XX == "Zu" ~ "Anthropogenic deposits",
+    XX == "Iy" ~ "Pyroclastics"
+  )) %>% 
+  rename(sed = OBJECTID)
+
+sed <- raster::extract(sed_raster, cbind(hlz_lgm_all_clean$Longitude,
+                                         hlz_lgm_all_clean$Latitude))
+
+hlz_all_sed <- cbind(hlz_lgm_all_clean, sed) %>% 
+  tibble() %>% 
+  left_join(sed_legend) 
+
+hlz_all_sed %>% 
+  count(sediment_class) %>% 
+  view()
+
+## Gap-fill soil order based on USDA global soil map
+# Need to download map first
+soil_dir <- "C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/USDA_GlobalSoilMap/so2015v2.tif"
+soil_raster <- raster(soil_dir)
+GRIDCODE <- raster::extract(soil_raster, cbind(hlz_all_sed$Longitude,
+                                               hlz_all_sed$Latitude))
+
+soil_code <- read_table("C:/Users/f0076db/Documents/PhD/AfSIS_GlobalData/USDA_GlobalSoilMap/2015_suborders_and_gridcode.txt")
+
+hlz_all_soil <- cbind(hlz_all_sed, GRIDCODE) %>% 
+  tibble() %>% 
+  left_join(soil_code) %>% 
+  mutate(soil_order_filled = case_when(
+    !is.na(soil_order) ~ soil_order,
+    TRUE ~ SOIL_ORDER
+  ))
+
 ## Final dataset
-hlz_final <- hlz_all_fill %>% 
-  dplyr::select(-c(AREA, PERIMETER, HOLDRIG_, CASE_, FREQUENCY, SYMBOL))
+hlz_final <- hlz_all_soil %>% 
+  dplyr::select(-c(AREA.x, PERIMETER.x, AREA.y, PERIMETER.y ,HOLDRIG_, CASE_, 
+                   FREQUENCY, SYMBOL, LGMCL_, VEG_ID, AREA, PERIMETER,
+                   SOIL_ORDER, SUBORDER, GRIDCODE, sed, Value, Count, XX))
+
+skimr::skim_without_charts(hlz_final)
 
 write_csv(x = hlz_final, file = paste0("./Data/Database_HLZ_", 
                                        Sys.Date(), ".csv"))

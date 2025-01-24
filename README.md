@@ -13,7 +13,7 @@ Only the data file 'Database_all_merged_2024-08-12.csv' is needed to reproduce t
 
 
 Folder Data:
-- Database_all_merged_2024-08-12.csv: Compiled dataset (can also be accessed via zenodo, doi: https://doi.org/10.5281/zenodo.11397695)
+- Database_all_merged_2024-08-12.csv: Compiled dataset (can also be accessed via zenodo, doi: https://zenodo.org/records/14732942)
 - Database_HLZ_2024-08-14.csv: Entire database with extracted climate data (MAP, MAT, HLZ). Can be generated with Mox_SOC_GlobalData.R
 - Database_HLZ_grp_2024-09-09.csv: Final database with grouped HLZ. Can be generated with Mox_SOC_HLZ_Grouping.R
   
